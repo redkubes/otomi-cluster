@@ -1,8 +1,2 @@
 /.history
 /.secrets
-/.prettierrc.yml
-/.vscode
-/.gitattributes
-/*.json
-*.yaml.dec
-.decrypted~*

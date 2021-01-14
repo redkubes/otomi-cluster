@@ -1,0 +1,20 @@
+{
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": true,
+  "files.associations": {
+    "*.yml": "yaml",
+    "*.yaml.dec": "yaml",
+    ".secrets*": "shellscript",
+    "otomi": "shellscript",
+    "aliases": "shellscript"
+  },
+  "prettier.enable": true,
+  "sops.defaults.gcpCredentialsPath": "gcp-key.json",
+  "sops.enabled": true,
+  "yaml.schemas": {
+    ".vscode/values-schema.yaml": "env/*.yaml"
+  }
+}
