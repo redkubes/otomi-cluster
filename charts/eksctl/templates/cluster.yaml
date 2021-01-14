@@ -1,0 +1,92 @@
+{{- $v := .Values }}
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: {{ $v.clusterName }}
+  region: {{ $v.region }}
+  version: "{{ $v.version }}"
+
+{{- with $v.managedNodeGroups }}
+managedNodeGroups:
+  {{- range $name, $ng := . }}
+  - name: ng-{{ $name }}
+    availabilityZones: [{{ $v.availabilityZones }}]
+    labels: {{- $ng.labels | toYaml | nindent 6 }}
+    tags:
+      nodegroup-role: worker
+    {{- if hasKey $ng "tags" }}
+      {{- $ng.tags | toYaml | nindent 6 }}
+    {{- end }}
+    instanceType: {{ $ng.instanceType }}
+    minSize: {{ $ng.minSize | default 3 }}
+    maxSize: {{ $ng.maxSize | default 7 }}
+    volumeSize: 100
+    ssh:
+      publicKeyPath: ssh/{{ $v.clusterName }}/id_rsa.pub
+    iam:
+      withAddonPolicies:
+        externalDNS: true
+        certManager: true
+        autoScaler: true
+  {{- end }}
+{{- end }}
+
+{{- with $v.nodeGroups }}
+nodeGroups:
+  {{- range $name, $ng := . }}
+  - name: ng-{{ $name }}
+    availabilityZones: [{{ $v.availabilityZones }}]
+    labels: {{- $ng.labels | toYaml | nindent 6 }}
+    tags:
+      nodegroup-role: worker
+    {{- if hasKey $ng "tags" }}
+      {{- $ng.tags | toYaml | nindent 6 }}
+    {{- end }}
+    instanceType: {{ $ng.instanceType }}
+    amiFamily: AmazonLinux2
+    ami: auto
+    minSize: {{ $ng.minSize | default 3 }}
+    maxSize: {{ $ng.maxSize | default 7 }}
+    volumeSize: 100
+    maxPodsPerNode: {{ index (index $v "eni-max-pods") $ng.instanceType }}
+    ssh:
+      publicKeyPath: ssh/{{ $v.clusterName }}/id_rsa.pub
+    privateNetworking: true
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+        - arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess
+        # @todo: - arn:aws:iam::1111111111:policy/kube2iam
+        {{- $ng.policyArns | toYaml | nindent 8 }}
+      withAddonPolicies:
+        imageBuilder: true
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+        appMesh: true
+        ebs: true
+        fsx: false
+        efs: false
+        xRay: false
+        albIngress: true
+    kubeletExtraConfig:
+      kubeReserved:
+        cpu: "300m"
+        memory: "300Mi"
+        ephemeral-storage: "1Gi"
+      kubeReservedCgroup: "/kube-reserved"
+      systemReserved:
+        cpu: "300m"
+        memory: "300Mi"
+        ephemeral-storage: "1Gi"
+      evictionHard:
+        memory.available: "200Mi"
+        nodefs.available: "10%"
+      featureGates:
+        DynamicKubeletConfig: true
+        RotateKubeletServerCertificate: true
+        VolumeSnapshotDataSource: true
+  {{- end }}
+{{- end }}

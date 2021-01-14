@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "resources.yaml": "helm",
+  },
+  "shellcheck.exclude": [
+    "0216","0286","2016","2046","2068","2148"
+  ]
+}

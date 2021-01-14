@@ -1,0 +1,4 @@
+_:
+  region: eu-west-4
+dns:
+  zone: eks.otomi.cloud

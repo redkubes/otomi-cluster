@@ -1,0 +1,5 @@
+gke:
+  release-channel: rapid
+  cluster-version: 1.18.12-gke.1200
+  node-locations: europe-west4-a
+  num-nodes: 1

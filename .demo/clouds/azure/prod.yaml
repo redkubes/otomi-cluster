@@ -1,0 +1,12 @@
+_:
+  environment: prod
+  zones: '1 2 3'
+
+aks:
+  create:
+    kubernetes-version: 1.19.3
+  nodePoolDefaults:
+    min-count: 3
+    max-count: 9
+  additionalNodePools:
+  # - name: agentpool2

@@ -1,0 +1,23 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetServerCertificate",
+        "iam:ListServerCertificates",
+        "iam:UploadServerCertificate",
+        "acm:ExportCertificate",
+        "acm:DescribeCertificate",
+        "acm:RequestCertificate",
+        "acm:GetCertificate",
+        "acm:ListCertificates",
+        "acm:ImportCertificate",
+        "acm:RenewCertificate",
+        "acm:ListTagsForCertificate",
+        "acm:AddTagsToCertificate"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

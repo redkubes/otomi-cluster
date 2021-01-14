@@ -1,0 +1,63 @@
+_:
+  region: westeurope
+  zones: '1 2 3'
+  tenantId:
+  subscriptionId:
+  labels:
+    some: label
+
+acr:
+  enabled: true
+  resource-group: rg-otomi
+  name: acrname
+  role: acrpull
+
+aks:
+  create: # see https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create
+    # generate-ssh-keys: true
+    enable-cluster-autoscaler: true
+    dns-service-ip: 10.2.0.10
+    docker-bridge-cidr: 172.17.0.1/16
+    auto-upgrade-channel: false
+    # network-plugin: azure
+    network-policy: calico
+    service-cidr: 10.2.0.0/16
+    nodepool-name: agentpool1 # not used for defaults below
+    # vm-set-type: VirtualMachineScaleSets
+  nodePoolDefaults: # put here any values that can be used for both system pool as well as base for extra nodepools
+    # see https://docs.microsoft.com/en-us/cli/azure/aks/nodepool?view=azure-cli-latest#az_aks_nodepool_add
+    # count: 3
+    # enable-auto-scaling: false
+    # enable-node-public-ip: false
+    max-count: 6
+    max-pods: 42
+    min-count: 3
+    node-os-disk-size-gb: 200
+    # os-type: Linux
+    node-vm-size: Standard_D3_v2
+
+appgw:
+  enabled: false
+  update:
+    sku: WAF_v2
+    capacity: 2
+  sslPolicy:
+    name: AppGwSslPolicy20170401S
+    policy-type: Predefined
+  waf:
+    enabled: true
+    disabled-rule-groups: []
+    exclusions: []
+    file-upload-limit-in-mb: 750
+    firewall-mode: Detection
+    max-request-body-size-in-kb: 128
+    request-body-check: true
+    rule-set-type: OWASP
+    rule-set-version: '3.1'
+    
+dns:
+  resourceGroup: otomi-dns
+  name: otomi-cloud
+  zone: aks.otomi.cloud
+vnet:
+  appgw-subnet-cidr: 10.1.0.0/16
