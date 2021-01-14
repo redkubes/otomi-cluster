@@ -6,7 +6,7 @@ set -e
 
 # build files
 readonly build_loc=$ENVC_DIR/build/$CLOUD/$CLUSTER
-readonly create_script=$build_loc/$CLOUD-create.sh
+readonly create_script=$build_loc/create.sh
 mkdir -p $build_loc &>/dev/null
 
 # build the command script
