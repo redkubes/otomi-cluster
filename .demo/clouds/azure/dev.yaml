@@ -5,6 +5,7 @@ _:
 aks:
   create:
     kubernetes-version: 1.19.3
+    auto-upgrade-channel: patch
   nodePoolDefaults:
     min-count: 1
     max-count: 7

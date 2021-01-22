@@ -17,11 +17,11 @@ aks:
     # generate-ssh-keys: true
     enable-cluster-autoscaler: true
     dns-service-ip: 10.2.0.10
-    docker-bridge-cidr: 172.17.0.1/16
-    auto-upgrade-channel: false
-    # network-plugin: azure
+    # docker-bridge-cidr: 172.17.0.1/16
+    auto-upgrade-channel: stable
+    network-plugin: azure
     network-policy: calico
-    service-cidr: 10.2.0.0/16
+    # service-cidr: 10.2.0.0/16
     nodepool-name: agentpool1 # not used for defaults below
     # vm-set-type: VirtualMachineScaleSets
   nodePoolDefaults: # put here any values that can be used for both system pool as well as base for extra nodepools
@@ -34,7 +34,7 @@ aks:
     min-count: 3
     node-os-disk-size-gb: 200
     # os-type: Linux
-    node-vm-size: Standard_D3_v2
+    node-vm-size: Standard_D3_v2 # https://docs.microsoft.com/en-us/azure/cloud-services/cloud-services-sizes-specs
 
 appgw:
   enabled: false

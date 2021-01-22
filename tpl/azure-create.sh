@@ -13,15 +13,22 @@ dns_zone=$(y dns zone)
 certmanager_sp_name="sp-certmanager-$cluster_name"
 years=5
 
+echo "echo 'Changing account to use subscription \"$subscription_id\"'"
+echo "az account set --subscription '$subscription_id'"
+
+echo "echo 'Enabling feature Microsoft.ContainerService/AutoUpgradePreview'"
+echo 'az feature register --namespace Microsoft.ContainerService -n AutoUpgradePreview'
+echo 'az provider register -n Microsoft.ContainerService'
+
 echo 'if ! az group list | grep "\"name\": \"'$aks_resource_group'\"" >/dev/null; then'
-  echo "  echo 'Creating Resource Group \"$aks_resource_group\" in subscription \"$subscription_id\"...'"
+  echo "  echo 'Creating Resource Group \"$aks_resource_group\"...'"
   echo "  az group create -n '$aks_resource_group' -l '$region'"
   echo "  echo 'Resource Group \"$aks_resource_group\" created'"
 echo 'fi'
 
 echo "echo 'Creating AKS cluster \"$cluster_name\". This will take around 10 minutes...'"
 
-echo "az aks create -n '$cluster_name' -g '$aks_resource_group' --zones $(y '.' zones) \
+echo "az aks create -n '$cluster_name' -g '$aks_resource_group' --zones $(y _ zones) \
   $(y aks.create) $(y aks.nodePoolDefaults) \
   $(ye acr && echo --attach-acr $(y acr name)) \
   $(ye appgw && echo "-a ingress-appgw --appgw-name $appgw_name --appgw-subnet-cidr $(y vnet appgwSubnetCIDR)")"

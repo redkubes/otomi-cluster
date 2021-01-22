@@ -28,7 +28,9 @@ echo 'fi'
 echo "if ! gcloud iam service-accounts list | grep -e '^$dns_manager'; then"
   # set up otomi-dns-manager service account
   echo "  gcloud iam service-accounts create '$dns_manager' --display-name '$dns_manager' --project '$project'"
-  echo "  gcloud projects add-iam-policy-binding '$project' --member 'serviceAccount:$dns_manager@$project.iam.gserviceaccount.com' --role 'roles/dns.admin'"
+  echo "  sa_email='serviceAccount:$dns_manager@$project.iam.gserviceaccount.com'"
+  echo "  gcloud iam service-accounts keys create '$build_loc/$dns_manager.json' --iam-account='$sa_email'"
+  echo "  gcloud projects add-iam-policy-binding '$project' --member '$sa_email' --role 'roles/dns.admin'"
 echo 'fi'
 
 # create the cluster

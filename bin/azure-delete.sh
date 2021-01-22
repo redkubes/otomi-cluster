@@ -2,8 +2,6 @@
 set -e
 . bin/common.sh
 
-! check_env && exit 1
-
 echo "Deleting all resources in Resource Group $AZURE_RESOURCE_GROUP"
 
 az group delete --name $AZURE_RESOURCE_GROUP

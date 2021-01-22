@@ -7,7 +7,6 @@ export DRY=$3
 [[ -z $ENVC_DIR ]] && echo "ENVC_DIR must be set" && exit 1
 # . $ENVC_DIR/clouds/.env
 [[ -z $CLOUD || -z $CLUSTER ]] && echo "CLOUD and CLUSTER must be set" && exit 1
-. $ENVC_DIR/clouds/$CLOUD/.env
 
 
 # get the yaml value at a certain path
@@ -55,11 +54,11 @@ ye() {
 y() {
   if [ -n "$2" ]; then
     # key given
-    if [ "$1" = '.' ]; then
-      val=$(_y "$2")
-    else
+    # if [ "$1" = '_' ]; then
+    #   val=$(_y "$2")
+    # else
       val=$(_y "$1[$2]")
-    fi
+    # fi
     echo $val
   else
     dict="$(_y "$1" -j)"
@@ -67,18 +66,10 @@ y() {
     while IFS="=" read -r key val; do
       # not interested in our own flag our boolean false:
       { [ "$key" = "enabled" ] || [ "$val" = 'false' ]; } && continue 
-      printf -- "--%s" $key
+      printf -- "--%s " $key
       # for bools only print key:
       [ "$val" = 'true' ] && continue
       printf " '%s' " $val
     done < <(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" <<<"$dict")
-  fi
-}
-
-check_env() {
-  envs="$VALID_CLUSTERS"
-  if [[ ! $envs == *$CLUSTER* ]]; then
-    echo "Error: no such cluster: $CLUSTER. Valid clusters: $VALID_CLUSTERS"
-    return 1
   fi
 }
