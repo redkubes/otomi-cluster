@@ -45,16 +45,16 @@ Any time you want to work on a clusters repo, always make sure you export `ENVC_
 export ENVC_DIR=$PWD/../otomi-clusters
 ```
 
-Now you can generate cluster creation scripts into `$ENVC_DIR/build/$CLOUD/$CLUSTER/create.sh` with a dry run:
-```bash
-bin/create.sh azure dev 1
-```
-
-Or just drop the last argument, which will execute the creation script as well.
-
 ### Configuration
 
 Cloud specific configuration is found in `clouds/$CLOUD/default.yaml`. Cluster specific configuration is found in `clouds/$CLOUD/$CLUSTER.yaml` files.
 Please inspect the demo files to see what is possible. We might publish a jsonschema later, but we have more focus on [otomi-core](https://github.com/redkubes/otomi-core) right now.
 
 ### Deployment
+
+Now you can generate cluster creation scripts into `$ENVC_DIR/build/$CLOUD/$CLUSTER/create.sh` with a dry run:
+```bash
+bin/create.sh azure dev 1
+```
+
+Or just drop the last argument, which will execute the creation script as well.
