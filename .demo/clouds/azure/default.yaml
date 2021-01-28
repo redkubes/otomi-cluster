@@ -12,6 +12,9 @@ acr:
   name: acrname
   role: acrpull
 
+ad:
+  enabled: true
+  
 aks:
   create: # see https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create
     # generate-ssh-keys: true
