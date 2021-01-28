@@ -69,7 +69,7 @@ y() {
       printf -- "--%s " $key
       # for bools only print key:
       [ "$val" = 'true' ] && continue
-      printf " '%s' " $val
+      printf "'%s' " $val
     done < <(jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" <<<"$dict")
   fi
 }
