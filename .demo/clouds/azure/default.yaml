@@ -3,8 +3,6 @@ _:
   zones: '1 2 3'
   tenantId:
   subscriptionId:
-  labels:
-    some: label
 
 acr:
   enabled: true

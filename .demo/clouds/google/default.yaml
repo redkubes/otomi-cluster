@@ -3,8 +3,6 @@ _:
   organizationId: redkubes
   project: otomi-cloud
   region: europe-west4
-  labels:
-    customer: otomi
 
 bq:
   location: EU
@@ -12,7 +10,8 @@ bq:
 
 dns:
   name: otomi.cloud
-  zone: otomi
+  zone: otomi-dns
+  accountName: otomi-dns-manager
   
 gke:
   release-channel: stable
@@ -29,6 +28,7 @@ gke:
   enable-resource-consumption-metering: true
   enable-tpu: true
   image-type: COS
+  # labels: 'some=label,another=bla'
   machine-type: n1-standard-4
   maintenance-window: 01:00
   max-cpu: 8
@@ -38,7 +38,6 @@ gke:
   min-cpu: 4
   min-memory: 8
   min-nodes: 1
-  node-labels:
-    some: label
+  node-labels: 'customer=otomi'
   num-nodes: 3
   # enable-pod-security-policy: true

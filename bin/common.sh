@@ -22,11 +22,6 @@ m() {
   echo $first $second | jq -s '.[0] * .[1]'
 }
 
-l() {
-  local json=$(m $@)
-  echo $json | jq -r 'to_entries|map("\(.key)=\(.value|tostring)")|join(",")'
-}
-
 # check to see if 'enabled' flag is true for object at path given
 ye() {
   [[ $(_y $1 enabled) != 'true' ]] && return 1
