@@ -8,7 +8,6 @@ export DRY=$3
 # . $ENVC_DIR/clouds/.env
 [[ -z $CLOUD || -z $CLUSTER ]] && echo "CLOUD and CLUSTER must be set" && exit 1
 
-
 # get the yaml value at a certain path
 _y() {
   yq m -x $ENVC_DIR/clouds/$CLOUD/default.yaml $ENVC_DIR/clouds/$CLOUD/$CLUSTER.yaml | yq r - $@ --stripComments
@@ -24,7 +23,8 @@ m() {
 
 # check to see if 'enabled' flag is true for object at path given
 ye() {
-  [[ $(_y $1 enabled) != 'true' ]] && return 1
+  [ "$(_y $1.enabled)" != 'true' ] && return 1
+  return 0
 }
 
 # y, the YAML selector util
@@ -52,15 +52,20 @@ y() {
     # if [ "$1" = '_' ]; then
     #   val=$(_y "$2")
     # else
-      val=$(_y "$1[$2]")
+    val=$(_y "$1[$2]")
     # fi
-    echo $val
+    [ "$val" = "" ] && return 1 # to allow for defaults to be set
+    if [ -n "$3" ]; then
+      echo $val | sed -e 's/- //g'
+    else
+      echo $val
+    fi
   else
     dict="$(_y "$1" -j)"
     { [ "$dict" = '' ] || [ "$dict" = 'null' ]; } && return 1
     while IFS="=" read -r key val; do
       # not interested in our own flag our boolean false:
-      { [ "$key" = "enabled" ] || [ "$val" = 'false' ]; } && continue 
+      { [ "$key" = "enabled" ] || [ "$val" = 'false' ]; } && continue
       printf -- "--%s " $key
       # for bools only print key:
       [ "$val" = 'true' ] && continue

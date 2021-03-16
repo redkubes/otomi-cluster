@@ -1,15 +1,17 @@
 {
     "recommendations": [
-      "christian-kohler.path-intellisense",
-      "codezombiech.gitignore",
-      "eamodio.gitlens",
-      "esbenp.prettier-vscode",
-      "donjayamanne.githistory",
-      "ms-azuretools.vscode-docker",
-      "ms-kubernetes-tools.vscode-kubernetes-tools",
-      "redhat.vscode-yaml",
-      "shanoor.vscode-nginx",
-      "xyz.local-history",
-      "ms-vscode.azurecli"
+        "christian-kohler.path-intellisense",
+        "codezombiech.gitignore",
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode",
+        "foxundermoon.shell-format",
+        "donjayamanne.githistory",
+        "ms-azuretools.vscode-docker",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml",
+        "shanoor.vscode-nginx",
+        "timonwong.shellcheck",
+        "xyz.local-history",
+        "ms-vscode.azurecli"
     ]
-  }
+}

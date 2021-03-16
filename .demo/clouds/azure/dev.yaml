@@ -4,10 +4,26 @@ _:
 
 aks:
   create:
-    kubernetes-version: 1.19.3
+    kubernetes-version: 1.19.7
     auto-upgrade-channel: patch
   nodePoolDefaults:
     min-count: 1
     max-count: 7
   additionalNodePools:
   # - name: agentpool2
+
+db:
+  postgres:
+    enabled: true
+    names: otomi-dta
+    otomi-dta-utrecht:
+      create:
+        location: westeurope
+        admin-user: pgadmin
+        admin-password: XOYYqxD2dcYNbOSKB6sDWjizNcB6c0RA
+        sku-name: GP_Gen5_4
+      ipAccess:
+        - 123.123.123.123
+
+preview:
+  enabled: true

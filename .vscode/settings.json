@@ -1,8 +1,22 @@
 {
-  "files.associations": {
-    "resources.yaml": "helm",
+  "[docker,shell]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
   },
+  "[json,md,yaml,dec]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnPaste": false,
+  "editor.formatOnSave": true,
+  "files.associations": {
+    "resources.yaml": "helm"
+  },
+  "prettier.enable": true,
   "shellcheck.exclude": [
-    "0216","0286","2016","2046","2068","2148"
+    "0216",
+    "0286",
+    "2016",
+    "2046",
+    "2068",
+    "2148"
   ]
 }

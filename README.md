@@ -1,6 +1,6 @@
-# Otomi cluster
+# Otomi Cluster
 
-Used to create Otomi Container Platform compatible clusters. The cluster creation scripts use the cloud native cli to create preferred, suggested architectures, as found in the offerings of the public cloud providers.
+Used to create Otomi Container Platform compatible clusters and backing infra. The creation scripts use the cloud native cli to create preferred, suggested architectures, as found in the offerings of the public cloud providers.
 
 ## Rationale
 
@@ -13,11 +13,12 @@ The creation scripts you will find here are only using cloud native cli. This ha
 - The code is DRY and simple and not as susceptible to rot
 
 Overall it warrants more simplicity, stability, predictability, maintainability, but also time to market.
-  
-Downsides:  
+
+Downsides:
+
 - The scripts do not allow much tweaking or advanced architectures.
 - Moves focus to cli know-how, so no more knowledge benefit from tinkering under the hood (but we think that is a good thing).
- 
+
 Most of the times the architectures offered here are suitable enough for lots of use cases, and clusters become much more manageable when it comes to lifecycle maintenance. If you want a customized setup with fine grained control over everything, there are plenty of solutions out there to choose from.
 
 ## Usage
@@ -32,6 +33,7 @@ Most of the times the architectures offered here are suitable enough for lots of
 ### Setup
 
 Please start by creating an empty git folder and installing the `.demo/*` files there, and configure to your liking. Example:
+
 ```bash
 export ENVC_DIR=$PWD/../otomi-clusters
 mkdir $ENVC_DIR
@@ -41,6 +43,7 @@ git init $ENVC_DIR
 ```
 
 Any time you want to work on a clusters repo, always make sure you export `ENVC_DIR`:
+
 ```bash
 export ENVC_DIR=$PWD/../otomi-clusters
 ```
@@ -53,6 +56,7 @@ Please inspect the demo files to see what is possible. We might publish a jsonsc
 ### Deployment
 
 Now you can generate cluster creation scripts into `$ENVC_DIR/build/$CLOUD/$CLUSTER/create.sh` with a dry run:
+
 ```bash
 bin/create.sh azure dev 1
 ```
