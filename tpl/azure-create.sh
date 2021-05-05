@@ -138,7 +138,7 @@ if ye kms; then
 fi
 
 echo "echo 'Creating AKS cluster \"$cluster_name\". This will take around 10 minutes...'"
-echo "az aks create -n '$cluster_name' -g '$aks_rg' --zones $(y _ zones) --load-balancer-outbound-ips \$egress_ip_id,\$ingress_ip_id $(y aks.create) $(y aks.nodePoolDefaults)\
+echo "az aks create -n '$cluster_name' -g '$aks_rg' --generate-ssh-keys --zones $(y _ zones) --load-balancer-outbound-ips \$egress_ip_id,\$ingress_ip_id $(y aks.create) $(y aks.nodePoolDefaults)\
   $(ye acr && echo --attach-acr $(y acr name)) $(ye appgw && $preview && echo "-a ingress-appgw --appgw-name $appgw_name --appgw-subnet-cidr $(y vnet appgwSubnetCIDR)")"
 
 if ye appgw; then
