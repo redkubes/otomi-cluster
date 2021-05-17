@@ -22,12 +22,14 @@ years=5
 
 echo "echo 'Changing account to use subscription \"$subscription_id\"'"
 echo "az account set --subscription '$subscription_id'"
+echo
 
 if $preview; then
   echo "echo 'Enabling feature Microsoft.ContainerService/AutoUpgradePreview'"
   echo 'az feature register --namespace Microsoft.ContainerService -n AutoUpgradePreview'
   echo 'az provider register -n Microsoft.ContainerService'
   echo 'az extension add --name aks-preview'
+  echo
 fi
 
 echo 'if ! az group list | grep "\"name\": \"'$aks_rg'\"" >/dev/null; then'
@@ -35,6 +37,7 @@ echo "  echo 'Creating Resource Group \"$aks_rg\"...'"
 echo "  az group create -n '$aks_rg' -l '$region'"
 echo "  echo 'Resource Group \"$aks_rg\" created'"
 echo 'fi'
+echo
 
 echo 'dns_sp_id=$(az ad sp list --display-name '$dns_sp_name' | jq -r ".[0].appId")'
 echo 'if [ "$dns_sp_id" = "null" ]; then'
@@ -52,6 +55,8 @@ external-dns:
     aadClientSecret: $dns_sp_secret
 EOF'
 echo 'fi'
+echo
+
 echo "echo 'Retrieving DNS Resource group ID'"
 echo 'dns_rg_id=$(az group show --name '$dns_rg' --query "id" --output tsv)'
 echo 'echo "The DNS Resource Group ID = \"$dns_rg_id\""'
@@ -61,6 +66,7 @@ echo 'echo "The DNS Zone ID is \"$dns_zone_id\""'
 echo 'az role assignment create --role "Reader" --assignee $dns_sp_id --scope $dns_rg_id >/dev/null'
 echo 'az role assignment create --role "Contributor" --assignee $dns_sp_id --scope $dns_zone_id >/dev/null'
 echo "echo 'Role assignments for \"$dns_sp_name\" created'"
+echo
 
 echo 'certmanager_sp_id=$(az ad sp list --display-name '$certmanager_sp_name' | jq -r ".[0].appId")'
 echo 'if [ "$certmanager_sp_id" = "null" ]; then'
@@ -81,6 +87,7 @@ EOF'
 echo 'fi'
 echo 'az role assignment create --assignee $certmanager_sp_id --role "DNS Zone Contributor" --scope $dns_zone_id >/dev/null'
 echo "echo 'Assigned roles to sp \"$certmanager_sp_name\"'"
+echo
 
 echo 'kms_sp_id=$(az ad sp list --display-name '$kms_sp_name' | jq -r ".[0].appId")'
 echo 'if [ "$kms_sp_id" = "null" ]; then'
@@ -97,34 +104,60 @@ kms:
     clientSecret: $kms_sp_secret
 EOF'
 echo "fi"
+echo
 
 ingress_ip_name=$(y sip.ingress || echo "$cluster_name-ingress")
 echo "ingress_ip_id=\$(az network public-ip list --query \"[?name=='$ingress_ip_name']\".id -o tsv)"
 echo 'if [ "$ingress_ip_id" = "" ]; then'
 echo "  echo 'Creating static ip address for ingress with name \"$ingress_ip_name\".'"
-echo "  az network public-ip create -g $aks_rg -n $ingress_ip_name --allocation-method static --sku Standard"
-echo '  echo "Created static ip address for ingress"'
+echo '  ingress_ip_addr=$(az network public-ip create -g '$aks_rg' -n '$ingress_ip_name' --allocation-method static --sku Standard | jq -r ".id")'
+echo '  echo "Created static ip address for ingress: name='$ingress_ip_name', ip=$ingress_ip_addr"'
+echo '  cat <<EOF >>'$build_loc'/values.yaml
+ingress-ip: $ingress_ip_addr
+EOF'
 echo 'fi'
 echo 'ingress_ip="$(az network public-ip show -g '$aks_rg' -n '$ingress_ip_name')"'
 echo 'ingress_ip_id=$(echo $ingress_ip  | jq -r ".id")'
 echo 'ingress_ip_addr=$(echo $ingress_ip  | jq -r ".ipAddress")'
 echo 'echo "Found static ip address for ingress: name='$ingress_ip_name', ip=$ingress_ip_addr"'
+echo
 
-egress_ip_name=$(y sip.egress || echo "$cluster_name-egress")
-echo "egress_ip_id=\$(az network public-ip list --query \"[?name=='$egress_ip_name']\".id -o tsv)"
-echo 'if [ "$egress_ip_id" = "" ]; then'
-echo "  echo 'Creating static ip address for egress with name \"$egress_ip_name\".'"
-echo "  az network public-ip create -g $aks_rg -n $egress_ip_name --allocation-method static --sku Standard"
-echo '  echo "Created static ip address for egress"'
+egress_ip_name_1=$(y sip.egress || echo "$cluster_name-egress-1")
+echo "egress_ip_id_1=\$(az network public-ip list --query \"[?name=='$egress_ip_name_1']\".id -o tsv)"
+echo 'if [ "$egress_ip_id_1" = "" ]; then'
+echo "  echo 'Creating static ip address for egress with name \"$egress_ip_name_1\".'"
+echo '  egress_ip_addr_1=$(az network public-ip create -g '$aks_rg' -n '$egress_ip_name_1' --allocation-method static --sku Standard | jq -r ".id")'
+echo '  echo "Created static ip address for ingress: name='$egress_ip_name_1', ip=$egress_ip_addr_1"'
+echo '  cat <<EOF >>'$build_loc'/values.yaml
+egress-ip-1: $egress_ip_addr_1
+EOF'
 echo 'fi'
-echo 'egress_ip="$(az network public-ip show -g '$aks_rg' -n '$egress_ip_name')"'
-echo 'egress_ip_id=$(echo $egress_ip  | jq -r ".id")'
-echo 'egress_ip_addr=$(echo $egress_ip  | jq -r ".ipAddress")'
-echo 'echo "Found static ip address for egress: name='$egress_ip_name', ip=$egress_ip_addr"'
+echo 'egress_ip_1="$(az network public-ip show -g '$aks_rg' -n '$egress_ip_name_1')"'
+echo 'egress_ip_id_1=$(echo $egress_ip_1  | jq -r ".id")'
+echo 'egress_ip_addr_1=$(echo $egress_ip_1  | jq -r ".ipAddress")'
+echo 'echo "Found static ip address for egress: name='$egress_ip_name_1', ip=$egress_ip_addr_1"'
+echo
+
+egress_ip_name_2=$(y sip.egress || echo "$cluster_name-egress-2")
+echo "egress_ip_id_2=\$(az network public-ip list --query \"[?name=='$egress_ip_name_2']\".id -o tsv)"
+echo 'if [ "$egress_ip_id_2" = "" ]; then'
+echo "  echo 'Creating static ip address for egress with name \"$egress_ip_name_2\".'"
+echo '  egress_ip_addr_2=$(az network public-ip create -g '$aks_rg' -n '$egress_ip_name_2' --allocation-method static --sku Standard | jq -r ".id")'
+echo '  echo "Created static ip address for ingress: name='$egress_ip_name_2', ip=$egress_ip_addr_2"'
+echo '  cat <<EOF >>'$build_loc'/values.yaml
+egress-ip-1: $egress_ip_addr_2
+EOF'
+echo 'fi'
+echo 'egress_ip_2="$(az network public-ip show -g '$aks_rg' -n '$egress_ip_name_2')"'
+echo 'egress_ip_id_2=$(echo $egress_ip_2  | jq -r ".id")'
+echo 'egress_ip_addr_2=$(echo $egress_ip_2  | jq -r ".ipAddress")'
+echo 'echo "Found static ip address for egress: name='$egress_ip_name_2', ip=$egress_ip_addr_2"'
+echo
 
 if ye appgw && ! $preview; then
   echo "echo 'Creating Application Gateway \"$appgw_name\". This will take around 10 minutes...'"
-  echo "az aks network application-gateway create -n '$appgw_name' -g '$aks_rg' --zones $(y _ zones) $(y appgw.create) --public-ip-address '\$egress_ip_id'"
+  echo "az aks network application-gateway create -n '$appgw_name' -g '$aks_rg' --zones $(y _ zones) $(y appgw.create) --public-ip-address '\$egress_ip_id_1'"
+  echo
 fi
 
 if ye kms; then
@@ -135,10 +168,11 @@ if ye kms; then
   echo 'az keyvault set-policy --name '$kms_vault' --resource-group '$kms_rg' --spn $kms_sp_id \
         --key-permissions encrypt decrypt'
   echo 'echo "Created key vault '$kms_vault', with key '$kms_key', with key id $kms_key_id"'
+  echo
 fi
 
 echo "echo 'Creating AKS cluster \"$cluster_name\". This will take around 10 minutes...'"
-echo "az aks create -n '$cluster_name' -g '$aks_rg' --zones $(y _ zones) --load-balancer-outbound-ips \$egress_ip_id,\$ingress_ip_id $(y aks.create) $(y aks.nodePoolDefaults)\
+echo "az aks create -n '$cluster_name' -g '$aks_rg' --zones $(y _ zones) --load-balancer-outbound-ips \$egress_ip_id_1,\$ingress_ip_id_2 $(y aks.create) $(y aks.nodePoolDefaults)\
   $(ye acr && echo --attach-acr $(y acr name)) $(ye appgw && $preview && echo "-a ingress-appgw --appgw-name $appgw_name --appgw-subnet-cidr $(y vnet appgwSubnetCIDR)")"
 
 if ye appgw; then
@@ -155,11 +189,12 @@ if ye appgw; then
     echo "echo 'Updating WAF settings for Application Gateway \"$appgw_name\"..."
     echo "az network application-gateway waf-config set -g $appgw_rg --gateway-name $appgw_name --enabled true $(y appgw.waf)"
   fi
+  echo
 fi
 
 echo "echo 'Waiting for AKS cluster to become ready \"$cluster_name\"...'"
 echo 'while [ "$(az aks list -g '$aks_rg' | grep "\"name\": \"'$cluster_name'\"")" = "" ]; do echo "sleeping 5" && sleep 5; done'
-
+echo
 # if ya aks.additionalNodePools; then
 #   echo 'echo' "Adding additional node pools to AKS cluster '$cluster_name'..."
 #   echo 'echo' "Coming soon!"
@@ -170,6 +205,7 @@ if ye acr; then
   echo 'kubeletIdentityObjectId=$(az aks show -n '$cluster_name' -g '$aks_rg' --query identityProfile.kubeletidentity.objectId --out tsv)'
   echo 'azureContainerRegistryId=$(az acr show -n '$(y acr name)' -g '$(y acr resourceGroup)' --query id --out tsv)'
   echo 'az role assignment create --role '$(y acr role)' --assignee-object-id $kubeletIdentityObjectId --scope $azureContainerRegistryId'
+  echo
 fi
 
 if ye db.postgres; then
@@ -178,12 +214,30 @@ if ye db.postgres; then
   for name in $names; do
     echo "az postgres server create -n '$name' -g '$aks_rg' $(y db.postgres.$name.create)"
     echo "echo 'Creating firewall rules for db \"$name\"'"
-    echo "az postgres server firewall-rule create -n '$name' -g '$aks_rg' --server-name '$name' --start-ip-address \$egress_ip_addr --end-ip-address \$egress_ip_addr"
+    echo "az postgres server firewall-rule create -n '$name' -g '$aks_rg' --server-name '$name' --start-ip-address \$egress_ip_addr_1 --end-ip-address \$egress_ip_addr_1"
     for ip_addr in $(y db.postgres.$name ipAccess 1); do
       ip_label=$(echo $ip_addr | sed -e 's/\./-/g')
       echo "az postgres server firewall-rule create -n '$name-$ip_label' -g '$aks_rg' --server-name '$name' --start-ip-address $ip_addr --end-ip-address $ip_addr"
     done
   done
+  echo
+fi
+
+if ye storage; then
+  storage_account_name="otomi$CLUSTER"
+  echo "if ! az storage account check-name --name $storage_account_name | grep AlreadyExists >/dev/null; then"
+  echo "  az storage account create -n '$storage_account_name' -g '$aks_rg' $(y storage.create)"
+  echo '  export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$aks_rg' -o tsv)'
+  echo '  storage_key=$(az storage account keys list --resource-group '$aks_rg' --account-name '$storage_account_name' --query "[0].value" -o tsv)'
+  echo "  echo 'Creating yaml for storage'"
+  echo '  cat <<EOF >>'$build_loc'/values.yaml
+storage-'$storage_account_name':
+  resourceGroup: '$aks_rg'
+  accountName: '$storage_account_name'
+  accountKey: $storage_key
+EOF'
+  echo 'fi'
+  echo
 fi
 
 echo "echo 'Done creating AKS resources for cluster \"$cluster_name\"'"
