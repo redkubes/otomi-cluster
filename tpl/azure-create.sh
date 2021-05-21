@@ -162,17 +162,17 @@ fi
 
 if ye kms; then
   echo "echo 'Creating keyvault \"$kms_vault\".'"
-  echo "az keyvault create --name $kms_vault --resource-group $kms_rg"
-  echo "az keyvault key create --name $kms_key --vault-name $kms_vault --protection software --ops encrypt decrypt"
-  echo 'kms_key_id=$(az keyvault key show --name '$kms_key' --vault-name '$kms_vault' --query key.kid)'
+  echo "az keyvault create --name $kms_vault --resource-group $kms_rg --query properties.provisioningState -o tsv"
+  echo "echo 'Creating key \"$kms_key\".'"
+  echo 'kms_key_id=$(az keyvault key create --name '$kms_key' --vault-name '$kms_vault' --protection software --ops encrypt decrypt --query key.kid)'
   echo 'az keyvault set-policy --name '$kms_vault' --resource-group '$kms_rg' --spn $kms_sp_id \
-        --key-permissions encrypt decrypt'
+        --key-permissions encrypt decrypt --query properties.provisioningState -o tsv'
   echo 'echo "Created key vault '$kms_vault', with key '$kms_key', with key id $kms_key_id"'
   echo
 fi
 
 echo "echo 'Creating AKS cluster \"$cluster_name\". This will take around 10 minutes...'"
-echo "az aks create -n '$cluster_name' -g '$aks_rg' --zones $(y _ zones) --load-balancer-outbound-ips \$egress_ip_id_1,\$ingress_ip_id_2 $(y aks.create) $(y aks.nodePoolDefaults)\
+echo "az aks create -n '$cluster_name' -g '$aks_rg' --zones $(y _ zones) --load-balancer-outbound-ips \$egress_ip_id_1,\$egress_ip_id_2 $(y aks.create) $(y aks.nodePoolDefaults)\
   $(ye acr && echo --attach-acr $(y acr name)) $(ye appgw && $preview && echo "-a ingress-appgw --appgw-name $appgw_name --appgw-subnet-cidr $(y vnet appgwSubnetCIDR)")"
 
 if ye appgw; then
@@ -201,8 +201,9 @@ echo
 # fi
 
 if ye acr; then
-  echo "echo 'Attaching pull rights to Azure Container Registry \"$(y acr name)\"..."
-  echo 'kubeletIdentityObjectId=$(az aks show -n '$cluster_name' -g '$aks_rg' --query identityProfile.kubeletidentity.objectId --out tsv)'
+  echo "echo 'Attaching pull rights to Azure Container Registry \"$(y acr name)\"...'"
+  echo 'kubeletIdentityObjectId=$(az aks show -n '$cluster_name' -g '$aks_rg' --query servicePrincipalProfile.clientId -o tsv)'
+  echo '[ "$kubeletIdentityObjectId" = "msi" ] && kubeletIdentityObjectId=$(az aks show -n '$cluster_name' -g '$aks_rg' --query identityProfile.kubeletidentity.objectId -o tsv)'
   echo 'azureContainerRegistryId=$(az acr show -n '$(y acr name)' -g '$(y acr resourceGroup)' --query id --out tsv)'
   echo 'az role assignment create --role '$(y acr role)' --assignee-object-id $kubeletIdentityObjectId --scope $azureContainerRegistryId'
   echo

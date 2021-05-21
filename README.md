@@ -42,10 +42,12 @@ cp -r .demo/.* $ENVC_DIR/
 git init $ENVC_DIR
 ```
 
-Any time you want to work on a clusters repo, always make sure you export `ENVC_DIR`:
+Any time you want to work on a clusters repo, always make sure you export `ENVC_DIR`, `CLOUD` and `CLUSTER`:
 
 ```bash
 export ENVC_DIR=$PWD/../otomi-clusters
+export CLOUD=azure
+export CLUSTER=dev
 ```
 
 ### Configuration

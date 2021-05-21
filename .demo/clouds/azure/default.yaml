@@ -6,14 +6,16 @@ _:
 acr:
   enabled: true
   name: acrname
-  resource-group: rg-otomi
+  resourceGroup: rg-otomi
   role: acrpull
 ad:
   enabled: true
 aks:
   create:
-    auto-upgrade-channel: stable
+    enable-managed-identity: true
+    # auto-upgrade-channel: stable
     dns-service-ip: 10.2.0.10
+    service-cidr: 10.2.0.0/24
     enable-cluster-autoscaler: true
     network-plugin: azure
     network-policy: calico
@@ -22,7 +24,7 @@ aks:
     max-count: 6
     max-pods: 42
     min-count: 3
-    node-os-disk-size-gb: 200
+    node-osdisk-size: 200
     node-vm-size: Standard_D3_v2
 appgw:
   enabled: false
