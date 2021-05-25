@@ -10,6 +10,8 @@ mkdir -p $build_loc &>/dev/null
 # build the command script
 . tpl/$CLOUD-create.sh >$create_script
 
+chmod 744 $create_script
+
 if [ -z "$DRY" ]; then
   # source the script
   . $create_script
