@@ -79,9 +79,9 @@ echo 'echo "The DNS Resource Group ID is $dns_rg_id"'
 echo 'echo "Retrieving DNS Zone ID"'
 echo 'dns_zone_id=$(az network dns zone show --name '$dns_zone' --resource-group '$dns_rg' --query id --output tsv)'
 echo 'echo "The DNS Zone ID is $dns_zone_id"'
-echo 'az role assignment create --role "Reader" --assignee $dns_sp_id --scope $dns_rg_id '$out
+echo 'az role assignment create --role "Reader" --assignee $dns_sp_id --scope $dns_rg_id' $out
 echo 'echo "Assigned role Reader to sp '$dns_sp_name' on scope $dns_rg_id"'
-echo 'az role assignment create --role "Contributor" --assignee $dns_sp_id --scope $dns_zone_id '$out
+echo 'az role assignment create --role "Contributor" --assignee $dns_sp_id --scope $dns_zone_id' $out
 echo 'echo "Assigned role Contributor to sp '$dns_sp_name' on scope $dns_zone_id"'
 echo
 
@@ -102,7 +102,7 @@ cert-manager:
       clientSecret: $certmanager_sp_secret
 EOF'
 echo 'fi'
-echo 'az role assignment create --assignee $certmanager_sp_id --role "DNS Zone Contributor" --scope $dns_zone_id '$out
+echo 'az role assignment create --assignee $certmanager_sp_id --role "DNS Zone Contributor" --scope $dns_zone_id' $out
 echo 'echo "Assigned role DNS Zone Contributor to sp '$certmanager_sp_name' on scope $dns_zone_id"'
 echo
 
@@ -145,9 +145,9 @@ echo '  msi=$(az identity create -n "'$cluster_name'" -g "'$aks_rg'" -l "'$regio
 echo 'fi'
 echo 'msi_client_id=$(az identity show --query clientId -o tsv --id $msi)'
 echo 'echo "Granting Network Contributor access to the msi SP to manage the static ingress ip..."'
-echo 'az role assignment create --assignee "$msi_client_id" --scope "$ingress_ip_id" --role "Network Contributor" '$out
+echo 'az role assignment create --assignee "$msi_client_id" --scope "$ingress_ip_id" --role "Network Contributor"' $out
 if [ -n "$vnet_subnet_id" ]; then
-  echo 'az role assignment create --assignee "$msi_client_id" --scope "'$vnet_subnet_id'" --role "Network Contributor" '$out
+  echo 'az role assignment create --assignee "$msi_client_id" --scope "'$vnet_subnet_id'" --role "Network Contributor"' $out
 fi
 echo
 
@@ -169,11 +169,11 @@ if ye kms; then
   echo 'kms_key_id=$(az keyvault key show -n "'$kms_key'" -g "'$kms_rg'" '$tid' 2>/dev/null)'
   echo 'if [ -z "$kms_key_id" ]; then'
   echo '  echo "Creating key '$kms_key'"'
-  echo '  kms_key_id=$(az keyvault key create --name "'$kms_key'" --vault-name "'$kms_vault'" --protection software --ops encrypt decrypt --query key.kid '$out')'
+  echo '  kms_key_id=$(az keyvault key create --name "'$kms_key'" --vault-name "'$kms_vault'" --protection software --ops encrypt decrypt --query key.kid' $out')'
   echo 'fi'
-  echo 'az role assignment create --role "Key Vault Administrator" --assignee "$user_id" --scope "$keyvault_id" '$out
+  echo 'az role assignment create --role "Key Vault Administrator" --assignee "$user_id" --scope "$keyvault_id"' $out
   echo 'sleep 5'
-  echo 'az role assignment create --role "Key Vault Crypto Service Encryption User" --assignee "$kms_sp_id" --scope "$keyvault_id/keys/'$kms_key'" '$out
+  echo 'az role assignment create --role "Key Vault Crypto Service Encryption User" --assignee "$kms_sp_id" --scope "$keyvault_id/keys/'$kms_key'"' $out
   echo 'sleep 5'
   echo 'echo "Created key vault '$kms_vault', with key '$kms_key' (key ID $kms_key_id)"'
   echo
@@ -213,7 +213,7 @@ if ye acr; then
   echo 'kubelet_identity_object_id=$(az aks show -n '$cluster_name' -g '$aks_rg' --query servicePrincipalProfile.clientId -o tsv)'
   echo '[ "$kubelet_identity_object_id" = "msi" ] && kubelet_identity_object_id=$(az aks show -n '$cluster_name' -g '$aks_rg' --query identityProfile.kubeletidentity.objectId -o tsv)'
   echo 'azure_container_registry_id=$(az acr show -n '$acr_name' -g '$(y acr resourceGroup)' --query id --out tsv)'
-  echo 'az role assignment create --role '$(y acr role)' --assignee-object-id $kubelet_identity_object_id --scope $azure_container_registry_id '$out
+  echo 'az role assignment create --role '$(y acr role)' --assignee-object-id $kubelet_identity_object_id --scope $azure_container_registry_id' $out
   echo
 fi
 
@@ -227,7 +227,7 @@ if ye db.postgres; then
     echo '  '$id'=$(az postgres server create -n '$name' -g '$aks_rg $(y db.postgres.$name.create) $tid $out')'
     echo 'fi'
     echo 'echo Creating firewall rules for db "'$name'"'
-    echo 'az postgres server firewall-rule create -n '$name' -g '$aks_rg' --server-name '$name' --start-ip-address "$ingress_ip_addr" --end-ip-address "$ingress_ip_addr" '$out
+    echo 'az postgres server firewall-rule create -n '$name' -g '$aks_rg' --server-name '$name' --start-ip-address "$ingress_ip_addr" --end-ip-address "$ingress_ip_addr"' $out
     for ip_addr in $(y db.postgres.$name ipAccess 1); do
       ip_label=$(echo $ip_addr | sed -e 's/\./-/g')
       echo 'az postgres server firewall-rule create -n '$name-$ip_label' -g '$aks_rg' --server-name '$name' --start-ip-address '$ip_addr' --end-ip-address '$ip_addr $out
@@ -238,9 +238,9 @@ if ye db.postgres; then
       echo 'az network private-endpoint create -g '$aks_rg' --connection-name '$name-postgres-connection' --name '$name-postgres' --private-connection-resource-id "$'$id'" --location '$region' --group-id postgresqlServer '$vnet_subnet_str $out
       echo 'if [ -z "$(az network private-dns zone show -g '$aks_rg' -n "privatelink.postgres.database.azure.com")" ]; then'
       echo '  echo Setting up private dns zone and private link for postgres'
-      echo '  az network private-dns zone create -g '$aks_rg' -n "privatelink.postgres.database.azure.com" '$out
-      echo '  az network private-dns link vnet create -g '$aks_rg' --zone-name "postgres.database.azure.com" -n "otomi-storage" --virtual-network "'$vnet_subnet_id'" --registration-enabled false '$out
-      echo '  az network private-endpoint dns-zone-group create -g '$aks_rg' -n "otomi-storage" --zone-name "postgres.database.azure.com" --endpoint-name "otomi-storage" --private-dns-zone "postgres.database.azure.com" '$out
+      echo '  az network private-dns zone create -g '$aks_rg' -n "privatelink.postgres.database.azure.com"' $out
+      echo '  az network private-dns link vnet create -g '$aks_rg' --zone-name "postgres.database.azure.com" -n "otomi-storage" --virtual-network "'$vnet_subnet_id'" --registration-enabled false' $out
+      echo '  az network private-endpoint dns-zone-group create -g '$aks_rg' -n "otomi-storage" --zone-name "postgres.database.azure.com" --endpoint-name "otomi-storage" --private-dns-zone "postgres.database.azure.com"' $out
       echo 'fi'
       echo
     fi
@@ -252,7 +252,7 @@ if ye storage; then
   echo 'storage_account_id=$(az storage account show -n '$storage_account_name' -g '$storage_rg $tid')'
   echo 'if [ -z "$storage_account_id" ]; then'
   echo '  storage_account_id=$(az storage account create -n '$storage_account_name' -g '$storage_rg $(y storage.create)' --default-action Deny '$subnet $tid $out')'
-  echo '  export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$aks_rg' -o tsv)'
+  echo '  export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$storage_rg' -o tsv)'
   echo '  storage_key=$(az storage account keys list --resource-group '$storage_rg' --account-name '$storage_account_name' --query "[0].value" -o tsv)'
   echo '  echo "Creating yaml for storage"'
   echo '  cat <<EOF >>'$build_loc_rel'/values.yaml
@@ -262,34 +262,34 @@ storage-'$storage_account_name':
   accountKey: $storage_key
 EOF'
   echo 'fi'
-  echo 'export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$aks_rg' -o tsv)'
-  echo 'az role assignment create --role "Storage Blob Data Contributor" --assignee "$user_id" --scope "$storage_account_id" '$out
+  echo 'export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$storage_rg' -o tsv)'
   echo 'echo "Assigned role Storage Blob Data Contributor to SP $user_id on scope $storage_account_id"'
   if ye storage.privateEndpoint; then
     echo 'echo "Creating private endpoint 'otomi-storage'"'
-    echo 'az network private-endpoint create -g '$aks_rg' --connection-name otomi-storage-connection --name otomi-storage --private-connection-resource-id "$storage_account_id" --location '$region' --group-id blob '$vnet_subnet_str $out
+    echo 'az network private-endpoint create -g '$storage_rg' --connection-name otomi-storage-connection --name otomi-storage --private-connection-resource-id "$storage_account_id" --location '$region' --group-id blob '$vnet_subnet_str $out
     echo
     echo 'echo "Setting up private dns zone for storage"'
-    echo 'if [ -z "$(az network private-dns zone show -g '$aks_rg' -n "privatelink.blob.core.windows.net" 2>/dev/null)" ]; then'
-    echo '  az network private-dns zone create -g '$aks_rg' -n "privatelink.blob.core.windows.net" '$out
-    echo '  az network private-dns link vnet create -g '$aks_rg' --zone-name "privatelink.blob.core.windows.net" -n "otomi-storage" --virtual-network "'$vnet_subnet_id'" --registration-enabled false '$out
-    echo '  az network private-endpoint dns-zone-group create -g '$aks_rg' -n "otomi-storage" --zone-name "privatelink.blob.core.windows.net" --endpoint-name "otomi-storage" --private-dns-zone "privatelink.blob.core.windows.net" '$out
+    echo 'if [ -z "$(az network private-dns zone show -g '$storage_rg' -n "privatelink.blob.core.windows.net" 2>/dev/null)" ]; then'
+    echo '  az network private-dns zone create -g '$storage_rg' -n "privatelink.blob.core.windows.net"' $out
+    echo '  az network private-dns link vnet create -g '$storage_rg' --zone-name "privatelink.blob.core.windows.net" -n "otomi-storage" --virtual-network "'$vnet_subnet_id'" --registration-enabled false' $out
+    echo '  az network private-endpoint dns-zone-group create -g '$storage_rg' -n "otomi-storage" --zone-name "privatelink.blob.core.windows.net" --endpoint-name "otomi-storage" --private-dns-zone "privatelink.blob.core.windows.net"' $out
     echo 'fi'
     echo
   fi
   if ye storage.containers; then
-    echo 'az storage account network-rule add --account-name '$storage_account_name' -g '$storage_rg' --ip-address $(curl ifconfig.co)'
+    # echo 'az role assignment create --role "Storage Blob Data Contributor" --assignee "$user_id" --scope "$storage_account_id"' $out
+    echo 'az storage account network-rule add --account-name '$storage_account_name' -g '$storage_rg' --ip-address $(curl ifconfig.co)' $out
     echo 'sleep 10'
     names=$(y storage.containers names)
     for name in $names; do
       id="container_id_$(echo $name | sed -e 's/-/_/g')"
-      echo $id'=$(az storage container show -n '$name $tid')'
+      echo $id'=$(az storage container show -n '$name $tid' 2>/dev/null)'
       echo 'if [ -z "$'$id'" ]; then'
       echo '  echo Creating storage container '$name
       echo '  '$id'=$(az storage container create -n '$name $tid $out')'
       echo 'fi'
     done
-    echo 'az storage account network-rule remove --account-name '$storage_account_name' -g '$storage_rg' --ip-address $(curl ifconfig.co)'
+    echo 'az storage account network-rule remove --account-name '$storage_account_name' -g '$storage_rg' --ip-address $(curl ifconfig.co)' $out
     echo
   fi
 fi
