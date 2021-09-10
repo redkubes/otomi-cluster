@@ -270,9 +270,9 @@ EOF'
     echo 'az network private-dns link vnet create -g '$aks_rg' --zone-name "privatelink.blob.core.windows.net" -n "otomi-storage" --virtual-network "'$vnet_subnet_id'" --registration-enabled false'
     echo 'az network private-endpoint dns-zone-group create -g '$aks_rg' -n "otomi-storage" --zone-name "privatelink.blob.core.windows.net" --endpoint-name "otomi-storage" --private-dns-zone "privatelink.blob.core.windows.net"'
   fi
-  if ye storage.createContainers; then
+  if ye storage.containers; then
     echo 'az storage account update -g '$storage_rg' -n '$storage_account_name' --default-action Allow'
-    names=$(y storage containers)
+    names=$(y storage.containers names)
     for name in $names; do
       id="container_id_$(echo $name | sed -e 's/-/_/g')"
       echo $id'=$(az storage container show -n '$name' '$tid')'

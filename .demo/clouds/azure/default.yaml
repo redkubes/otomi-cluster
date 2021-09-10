@@ -54,6 +54,15 @@ kms:
   vault: otomi-vault
 preview:
   enabled: false
+storage:
+  enabled: true
+  create:
+    sku: Standard_LRS
+  privateEndpoint:
+    enabled: true
+  containers:
+    enabled: true
+    names: harbor loki
 vnet:
-  id:
-  appgwSubnetCIDR: 10.1.0.0/16
+  subnet:
+    id: '/subscriptions/xx/resourceGroups/xx/providers/Microsoft.Network/virtualNetworks/xx/subnets/xx'
