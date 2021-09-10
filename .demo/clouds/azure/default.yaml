@@ -55,4 +55,5 @@ kms:
 preview:
   enabled: false
 vnet:
-  appgw-subnet-cidr: 10.1.0.0/16
+  id:
+  appgwSubnetCIDR: 10.1.0.0/16
