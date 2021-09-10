@@ -42,7 +42,7 @@ if $preview; then
   echo
 fi
 
-echo 'if ! az group list | grep "\"name\": \"'$aks_rg'\"" >/dev/null; then'
+echo 'if ! az group list | grep "\"name\": \"'$aks_rg'\"" &>/dev/null; then'
 echo "  echo 'Creating Resource Group \"$aks_rg\"...'"
 echo "  az group create -n '$aks_rg' -l '$region' --only-show-errors"
 echo "  echo 'Resource Group \"$aks_rg\" created'"
@@ -66,16 +66,15 @@ external-dns:
 EOF'
 echo 'fi'
 echo
-
 echo "echo 'Retrieving DNS Resource group ID'"
-echo 'dns_rg_id=$(az group show --name '$dns_rg' --query id --output tsv)'
+echo 'dns_rg_id=$(az group show --name '$dns_rg' --query id --output tsv --only-show-errors) &>/dev/null'
 echo 'echo "The DNS Resource Group ID = \"$dns_rg_id\""'
 echo "echo 'Retrieving DNS Zone ID'"
 echo 'dns_zone_id=$(az network dns zone show --name '$dns_zone' --resource-group '$dns_rg' --query id --output tsv)'
 echo 'echo "The DNS Zone ID is \"$dns_zone_id\""'
-echo 'az role assignment create --role "Reader" --assignee $dns_sp_id --scope $dns_rg_id --only-show-errors >/dev/null'
+echo 'az role assignment create --role "Reader" --assignee $dns_sp_id --scope $dns_rg_id --only-show-errors &>/dev/null'
 echo "echo 'Assigned role \"Reader\" to sp \"$dns_sp_name\" on scope '\$dns_rg_id"
-echo 'az role assignment create --role "Contributor" --assignee $dns_sp_id --scope $dns_zone_id --only-show-errors >/dev/null'
+echo 'az role assignment create --role "Contributor" --assignee $dns_sp_id --scope $dns_zone_id --only-show-errors &>/dev/null'
 echo "echo 'Assigned role \"Contributor\" to sp \"$dns_sp_name\" on scope '\$dns_zone_id"
 echo
 
@@ -96,7 +95,7 @@ cert-manager:
       clientSecret: $certmanager_sp_secret
 EOF'
 echo 'fi'
-echo 'az role assignment create --assignee $certmanager_sp_id --role "DNS Zone Contributor" --scope $dns_zone_id --only-show-errors >/dev/null'
+echo 'az role assignment create --assignee $certmanager_sp_id --role "DNS Zone Contributor" --scope $dns_zone_id --only-show-errors &>/dev/null'
 echo "echo 'Assigned role \"DNS Zone Contributor\" to sp \"$certmanager_sp_name\" on scope '\$dns_zone_id"
 echo
 
@@ -140,9 +139,9 @@ echo '  msi=$(az identity create -n "'$cluster_name'" -g "'$aks_rg'" -l "'$regio
 echo 'fi'
 echo 'msi_client_id=$(az identity show --query clientId -o tsv --id $msi)'
 echo "echo 'Granting Network Contributor access to the msi SP to manage the static ingress ip...'"
-echo 'az role assignment create --assignee "$msi_client_id" --scope "$ingress_ip_id" --role "Network Contributor" --only-show-errors >/dev/null'
+echo 'az role assignment create --assignee "$msi_client_id" --scope "$ingress_ip_id" --role "Network Contributor" --only-show-errors &>/dev/null'
 if [ -n "$vnet_subnet_id" ]; then
-  echo 'az role assignment create --assignee "$msi_client_id" --scope "'$vnet_subnet_id'" --role "Network Contributor" --only-show-errors >/dev/null'
+  echo 'az role assignment create --assignee "$msi_client_id" --scope "'$vnet_subnet_id'" --role "Network Contributor" --only-show-errors &>/dev/null'
 fi
 echo
 
@@ -156,19 +155,19 @@ if ye appgw && ! $preview; then
 fi
 
 if ye kms; then
-  echo 'keyvault_id=$(az keyvault show -n "'$kms_vault'" -g "'$kms_rg'" '$tid' 2>/dev/null)'
+  echo 'keyvault_id=$(az keyvault show -n "'$kms_vault'" -g "'$kms_rg'" '$tid' &>/dev/null)'
   echo 'if [ -z "$keyvault_id" ]; then'
   echo "  echo 'Creating keyvault \"$kms_vault\"'"
   echo '  keyvault_id=$(az keyvault create --name "'$kms_vault'" --resource-group "'$kms_rg'" --enable-purge-protection --enable-rbac-authorization '$tid' --only-show-errors)'
   echo 'fi'
-  echo 'kms_key_id=$(az keyvault key show -n "'$kms_key'" -g "'$kms_rg'" '$tid' 2>/dev/null)'
+  echo 'kms_key_id=$(az keyvault key show -n "'$kms_key'" -g "'$kms_rg'" '$tid' &>/dev/null)'
   echo 'if [ -z "$kms_key_id" ]; then'
   echo "  echo 'Creating key \"$kms_key\"'"
   echo '  kms_key_id=$(az keyvault key create --name "'$kms_key'" --vault-name "'$kms_vault'" --protection software --ops encrypt decrypt --query key.kid --only-show-errors)'
   echo 'fi'
-  echo 'az role assignment create --role "Key Vault Administrator" --assignee "$user_id" --scope "$keyvault_id" --only-show-errors >/dev/null'
+  echo 'az role assignment create --role "Key Vault Administrator" --assignee "$user_id" --scope "$keyvault_id" --only-show-errors &>/dev/null'
   echo 'sleep 5'
-  echo 'az role assignment create --role "Key Vault Crypto Service Encryption User" --assignee "$kms_sp_id" --scope "$keyvault_id/keys/'$kms_key'" --only-show-errors >/dev/null'
+  echo 'az role assignment create --role "Key Vault Crypto Service Encryption User" --assignee "$kms_sp_id" --scope "$keyvault_id/keys/'$kms_key'" --only-show-errors &>/dev/null'
   echo 'sleep 5'
   echo 'echo "Created key vault '$kms_vault', with key '$kms_key', with key id $kms_key_id"'
   echo
@@ -206,7 +205,7 @@ if ye acr; then
   echo 'kubelet_identity_object_id=$(az aks show -n '$cluster_name' -g '$aks_rg' --query servicePrincipalProfile.clientId -o tsv)'
   echo '[ "$kubelet_identity_object_id" = "msi" ] && kubelet_identity_object_id=$(az aks show -n '$cluster_name' -g '$aks_rg' --query identityProfile.kubeletidentity.objectId -o tsv)'
   echo 'azure_container_registry_id=$(az acr show -n '$(y acr name)' -g '$(y acr resourceGroup)' --query id --out tsv)'
-  echo 'az role assignment create --role '$(y acr role)' --assignee-object-id $kubelet_identity_object_id --scope $azure_container_registry_id --only-show-errors >/dev/null'
+  echo 'az role assignment create --role '$(y acr role)' --assignee-object-id $kubelet_identity_object_id --scope $azure_container_registry_id --only-show-errors &>/dev/null'
   echo
 fi
 
@@ -214,7 +213,7 @@ if ye db.postgres; then
   names=$(y db.postgres names)
   for name in $names; do
     id="db_id_$(echo $name | sed -e 's/-/_/g')"
-    echo $id'=$(az postgres server show -n '$name' -g '$aks_rg' '$tid')'
+    echo $id'=$(az postgres server show -n '$name' -g '$aks_rg' '$tid')' &>/dev/null
     echo 'if [ -z "$'$id'" ]; then'
     echo "  echo 'Creating database: $name'"
     echo '  '$id'=$(az postgres server create -n '$name' -g '$aks_rg' '$(y db.postgres.$name.create)' '$tid' --only-show-errors)'
@@ -256,9 +255,9 @@ storage-'$storage_account_name':
 EOF'
   echo 'fi'
   echo 'export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$aks_rg' -o tsv)'
-  echo 'az role assignment create --role "Storage Blob Data Contributor" --assignee "$user_id" --scope "$storage_account_id" --only-show-errors >/dev/null'
+  echo 'az role assignment create --role "Storage Blob Data Contributor" --assignee "$user_id" --scope "$storage_account_id" --only-show-errors &>/dev/null'
   echo "echo 'Assigned role \"Storage Blob Data Contributor\" to SP \"'\$user_id'\" on scope \"'\$storage_account_id'\"'"
-  echo 'az storage account network-rule add -g '$aks_rg' --account-name '$storage_account_name' --only-show-errors '$subnet' >/dev/null'
+  echo 'az storage account network-rule add -g '$aks_rg' --account-name '$storage_account_name' --only-show-errors '$subnet' &>/dev/null'
   if ye storage.privateEndpoint; then
     echo "echo 'Creating private endpoint \"otomi-storage\"'"
     echo 'az network private-endpoint create -g '$aks_rg' --connection-name otomi-storage-connection --name otomi-storage \
