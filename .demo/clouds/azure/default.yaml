@@ -6,7 +6,7 @@ _:
 acr:
   enabled: true
   name: acrname
-  resourceGroup: rg-otomi
+  # resourceGroup: rg-otomi
   role: acrpull
 ad:
   enabled: true

@@ -1,5 +1,5 @@
 _:
-  environment: dev
+  # resourceGroup: rg-otomi-dev
   zones: '1'
 
 aks:
@@ -18,10 +18,12 @@ db:
     names: otomi-dta
     otomi-dta-utrecht:
       create:
+        # public-network-access: Disabled
         location: westeurope
         admin-user: pgadmin
-        admin-password: XOYYqxD2dcYNbOSKB6sDWjizNcB6c0RA
+        admin-password: xxx
         sku-name: GP_Gen5_4
+        version: 11
       ipAccess:
         - 123.123.123.123
 
