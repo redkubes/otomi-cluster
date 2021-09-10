@@ -1,5 +1,5 @@
 _:
-  environment: prod
+  # resourceGroup: rg-otomi-prod
   zones: '1 2 3'
 
 aks:
