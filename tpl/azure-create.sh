@@ -13,7 +13,7 @@ rg=$(y _ resourceGroup || echo otomi-aks-$CLUSTER)
 dns_rg=$(y dns resourceGroup)
 aks_rg=$(y aks resourceGroup || echo $rg)
 sip_rg=$(y sip resourceGroup || echo $rg)
-storage_rg=$(y storage resourceGroup || echo $rg)
+export storage_rg=$(y storage resourceGroup || echo $rg)
 cluster_name=$(y aks name || echo otomi-aks-$CLUSTER)
 cluster_rg="MC_${aks_rg}_${cluster_name}_${region}"
 appgw_name="$cluster_name"
@@ -27,7 +27,7 @@ kms_sp_name=$(y ad.sp vault || echo sp-kms-$kms_vault)
 kms_key=$(y kms key || echo otomi-values)
 years=5
 vnet_subnet_id=$(y vnet.subnet id)
-subnet=$([ -n "$vnet_subnet_id" ] && echo "--subnet '$vnet_subnet_id'")
+export subnet=$([ -n "$vnet_subnet_id" ] && echo "--subnet '$vnet_subnet_id'")
 
 echo 'user_id=$(az account show --query "user.name" -o tsv)'
 echo "echo 'Changing account to use subscription \"$subscription_id\"'"
@@ -239,23 +239,10 @@ if ye db.postgres; then
 fi
 
 if ye storage; then
-  storage_account_name="otomi$CLUSTER"
-  echo 'storage_account_id=$(az storage account show -n '$storage_account_name' -g '$storage_rg' '$tid') 2>/dev/null'
-  echo 'if [ -z "$storage_account_id" ]; then'
-  echo '  storage_account_id=$(az storage account create -n '$storage_account_name' -g '$storage_rg' '$(y storage.create)' --default-action Deny --bypass "AzureServices" '$subnet' '$tid')'
-  echo '  export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$storage_rg' -o tsv)'
-  echo '  storage_key=$(az storage account keys list --resource-group '$storage_rg' --account-name '$storage_account_name' --query "[0].value" -o tsv)'
-  echo "  echo 'Creating yaml for storage'"
-  echo '  cat <<EOF >>'$build_loc_rel'/values.yaml
-storage-'$storage_account_name':
-  resourceGroup: '$storage_rg'
-  accountName: '$storage_account_name'
-  accountKey: $storage_key
-EOF'
-  echo 'fi'
-  echo 'export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$storage_rg' -o tsv)'
-  echo 'az role assignment create --role "Storage Blob Data Contributor" --assignee "$user_id" --scope "$storage_account_id" --only-show-errors &>/dev/null'
-  echo "echo 'Assigned role \"Storage Blob Data Contributor\" to SP \"'\$user_id'\" on scope \"'\$storage_account_id'\"'"
+  export storage_account_name="otomi$CLUSTER"
+  export storage_params=$(y storage.create)
+  envsubst <scripts/storage.sh >>createdscript.sh
+
   if ye storage.privateEndpoint; then
     echo "echo 'Creating private endpoint \"otomi-storage\"'"
     echo 'az network private-endpoint create -g '$storage_rg' --connection-name otomi-storage-connection --name otomi-storage \
