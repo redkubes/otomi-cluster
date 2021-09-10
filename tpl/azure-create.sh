@@ -240,47 +240,46 @@ fi
 
 if ye storage; then
   storage_account_name="otomi$CLUSTER"
-  echo 'storage_account_id=$(az storage account show -n '$storage_account_name' -g '$storage_rg' '$tid')'
-  echo 'az storage account update -g '$aks_rg' -n '$name' --bypass AzureServices'
+  echo 'storage_account_id=$(az storage account show -n '$storage_account_name' -g '$storage_rg' '$tid') 2>/dev/null'
   echo 'if [ -z "$storage_account_id" ]; then'
-  echo '  storage_account_id=$(az storage account create -n '$storage_account_name' -g '$storage_rg' '$(y storage.create)' --default-action Deny --bypass "AzureServices" '$tid')'
-  echo '  export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$aks_rg' -o tsv)'
+  echo '  storage_account_id=$(az storage account create -n '$storage_account_name' -g '$storage_rg' '$(y storage.create)' --default-action Deny --bypass "AzureServices" '$subnet' '$tid')'
+  echo '  export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$storage_rg' -o tsv)'
   echo '  storage_key=$(az storage account keys list --resource-group '$storage_rg' --account-name '$storage_account_name' --query "[0].value" -o tsv)'
   echo "  echo 'Creating yaml for storage'"
   echo '  cat <<EOF >>'$build_loc_rel'/values.yaml
 storage-'$storage_account_name':
-  resourceGroup: '$aks_rg'
+  resourceGroup: '$storage_rg'
   accountName: '$storage_account_name'
   accountKey: $storage_key
 EOF'
   echo 'fi'
-  echo 'export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$aks_rg' -o tsv)'
+  echo 'export AZURE_STORAGE_CONNECTION_STRING=$(az storage account show-connection-string -n '$storage_account_name' -g '$storage_rg' -o tsv)'
   echo 'az role assignment create --role "Storage Blob Data Contributor" --assignee "$user_id" --scope "$storage_account_id" --only-show-errors &>/dev/null'
   echo "echo 'Assigned role \"Storage Blob Data Contributor\" to SP \"'\$user_id'\" on scope \"'\$storage_account_id'\"'"
-  echo 'az storage account network-rule add -g '$aks_rg' --account-name '$storage_account_name' --only-show-errors '$subnet' &>/dev/null'
   if ye storage.privateEndpoint; then
     echo "echo 'Creating private endpoint \"otomi-storage\"'"
-    echo 'az network private-endpoint create -g '$aks_rg' --connection-name otomi-storage-connection --name otomi-storage \
+    echo 'az network private-endpoint create -g '$storage_rg' --connection-name otomi-storage-connection --name otomi-storage \
       --private-connection-resource-id "$storage_account_id" \
       --location '$region' --group-id blob '$subnet' --only-show-errors'
     echo
     echo "echo 'Setting up private dns zone for storage'"
-    echo 'az network private-dns zone create -g '$aks_rg' -n "privatelink.blob.core.windows.net"'
-    echo 'az network private-dns link vnet create -g '$aks_rg' --zone-name "privatelink.blob.core.windows.net" -n "otomi-storage" --virtual-network "'$vnet_subnet_id'" --registration-enabled false'
-    echo 'az network private-endpoint dns-zone-group create -g '$aks_rg' -n "otomi-storage" --zone-name "privatelink.blob.core.windows.net" --endpoint-name "otomi-storage" --private-dns-zone "privatelink.blob.core.windows.net"'
+    echo 'az network private-dns zone create -g '$storage_rg' -n "privatelink.blob.core.windows.net"'
+    echo 'az network private-dns link vnet create -g '$storage_rg' --zone-name "privatelink.blob.core.windows.net" -n "otomi-storage" --virtual-network "'$vnet_subnet_id'" --registration-enabled false'
+    echo 'az network private-endpoint dns-zone-group create -g '$storage_rg' -n "otomi-storage" --zone-name "privatelink.blob.core.windows.net" --endpoint-name "otomi-storage" --private-dns-zone "privatelink.blob.core.windows.net"'
   fi
   if ye storage.containers; then
-    echo 'az storage account update -g '$storage_rg' -n '$storage_account_name' --default-action Allow'
+    echo 'az storage account network-rule add --account-name '$storage_account_name' -g '$storage_rg' --ip-address '$(curl ifconfig.co)
+    echo 'sleep 10'
     names=$(y storage.containers names)
     for name in $names; do
       id="container_id_$(echo $name | sed -e 's/-/_/g')"
       echo $id'=$(az storage container show -n '$name' '$tid')'
       echo 'if [ -z "$'$id'" ]; then'
       echo "  echo 'Creating storage container: $name'"
-      echo '  '$id'=$(az storage container create -n '$name' '$tid' --only-show-errors)'
+      echo '  '$id'=$(az storage container create -n '$name' -g '$storage_rg' --account-name '$storage_account_name' --account-key '$storage_key' '$tid' --only-show-errors)'
       echo 'fi'
     done
-    echo 'az storage account update -g '$storage_rg' -n '$storage_account_name' --default-action Deny'
+    echo 'az storage account network-rule remove --account-name '$storage_account_name' -g '$storage_rg' --ip-address '$(curl ifconfig.co)
   fi
   echo
 fi
